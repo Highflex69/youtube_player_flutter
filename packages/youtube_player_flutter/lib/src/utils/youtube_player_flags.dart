@@ -9,6 +9,11 @@ class YoutubePlayerFlags {
   /// Default is false.
   final bool hideControls;
 
+  /// Hides the native YouTube overlay (title bar with video info) when set to true.
+  ///
+  /// Default is false.
+  final bool hideYoutubeOverlay;
+
   /// Is set to true, controls will be visible at start.
   ///
   /// Default is false.
@@ -96,6 +101,7 @@ class YoutubePlayerFlags {
     this.endAt,
     this.useHybridComposition = true,
     this.showLiveFullscreenButton = true,
+    this.hideYoutubeOverlay = true,
   });
 
   /// Copies new values assigned to the [YoutubePlayerFlags].
@@ -116,6 +122,7 @@ class YoutubePlayerFlags {
     bool? controlsVisibleAtStart,
     bool? useHybridComposition,
     bool? showLiveFullscreenButton,
+    bool? hideYoutubeOverlay,
   }) {
     return YoutubePlayerFlags(
       autoPlay: autoPlay ?? this.autoPlay,
@@ -131,10 +138,11 @@ class YoutubePlayerFlags {
       startAt: startAt ?? this.startAt,
       endAt: endAt ?? this.endAt,
       controlsVisibleAtStart:
-          controlsVisibleAtStart ?? this.controlsVisibleAtStart,
+      controlsVisibleAtStart ?? this.controlsVisibleAtStart,
       useHybridComposition: useHybridComposition ?? this.useHybridComposition,
       showLiveFullscreenButton:
-          showLiveFullscreenButton ?? this.showLiveFullscreenButton,
+      showLiveFullscreenButton ?? this.showLiveFullscreenButton,
+      hideYoutubeOverlay: hideYoutubeOverlay ?? this.hideYoutubeOverlay,
     );
   }
 }
