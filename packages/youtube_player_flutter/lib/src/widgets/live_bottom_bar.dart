@@ -16,6 +16,7 @@ class LiveBottomBar extends StatefulWidget {
     this.controller,
     required this.liveUIColor,
     required this.showLiveFullscreenButton,
+    this.customMuteButton,
   });
 
   /// Overrides the default [YoutubePlayerController].
@@ -26,6 +27,9 @@ class LiveBottomBar extends StatefulWidget {
 
   /// Defines whether to show or hide the fullscreen button
   final bool showLiveFullscreenButton;
+
+  /// Custom widget to replace the default mute button.
+  final Widget? customMuteButton;
 
   @override
   State<LiveBottomBar> createState() => _LiveBottomBarState();
@@ -81,6 +85,10 @@ class _LiveBottomBarState extends State<LiveBottomBar> {
           const SizedBox(
             width: 14.0,
           ),
+          if (widget.customMuteButton != null) ...[
+            widget.customMuteButton!,
+            const SizedBox(width: 8.0),
+          ],
           const CurrentPosition(),
           Expanded(
             child: Padding(

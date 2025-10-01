@@ -57,6 +57,9 @@ class YoutubePlayer extends StatefulWidget {
     this.actionsPadding = const EdgeInsets.all(8.0),
     this.thumbnail,
     this.showVideoProgressIndicator = false,
+    this.customMuteButton,
+    this.showForwardRewindControls = false,
+    this.showCaptionControls = false,
   })  : progressColors = progressColors ?? const ProgressBarColors(),
         progressIndicatorColor = progressIndicatorColor ?? Colors.red;
 
@@ -147,6 +150,27 @@ class YoutubePlayer extends StatefulWidget {
   /// Default is false.
   /// {@endtemplate}
   final bool showVideoProgressIndicator;
+
+  /// {@template youtube_player_flutter.customMuteButton}
+  /// Custom widget to replace the default mute button.
+  ///
+  /// If provided, this widget will be placed before the current time display.
+  /// {@endtemplate}
+  final Widget? customMuteButton;
+
+  /// {@template youtube_player_flutter.showForwardRewindControls}
+  /// Defines whether to show forward and rewind controls with double-tap gestures.
+  ///
+  /// Default is false.
+  /// {@endtemplate}
+  final bool showForwardRewindControls;
+
+  /// {@template youtube_player_flutter.showCaptionControls}
+  /// Defines whether to show caption toggle controls in the video player.
+  ///
+  /// Default is false.
+  /// {@endtemplate}
+  final bool showCaptionControls;
 
   /// Converts fully qualified YouTube Url to video id.
   ///
@@ -337,6 +361,10 @@ class _YoutubePlayerState extends State<YoutubePlayer> {
               disableDragSeek: controller.flags.disableDragSeek,
               timeOut: widget.controlsTimeOut,
             ),
+            if (widget.showForwardRewindControls)
+              ForwardRewindControls(
+                controlsTimeOut: widget.controlsTimeOut,
+              ),
             Positioned(
               bottom: 0,
               left: 0,
@@ -352,6 +380,7 @@ class _YoutubePlayerState extends State<YoutubePlayer> {
                         liveUIColor: widget.liveUIColor,
                         showLiveFullscreenButton:
                             widget.controller.flags.showLiveFullscreenButton,
+                        customMuteButton: widget.customMuteButton,
                       )
                     : Padding(
                         padding: widget.bottomActions == null
@@ -361,6 +390,10 @@ class _YoutubePlayerState extends State<YoutubePlayer> {
                           children: widget.bottomActions ??
                               [
                                 const SizedBox(width: 14.0),
+                                if (widget.customMuteButton != null) ...[
+                                  widget.customMuteButton!,
+                                  const SizedBox(width: 8.0),
+                                ],
                                 const CurrentPosition(),
                                 const SizedBox(width: 8.0),
                                 ProgressBar(
@@ -397,6 +430,11 @@ class _YoutubePlayerState extends State<YoutubePlayer> {
           if (!controller.flags.hideControls)
             const Center(child: PlayPauseButton()),
           if (controller.value.hasError) errorWidget,
+          if (widget.showCaptionControls)
+            CaptionControls(
+              iconColor: Colors.white,
+              iconSize: 22.0,
+            ),
         ],
       ),
     );

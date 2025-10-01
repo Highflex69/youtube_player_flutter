@@ -283,9 +283,27 @@ class YoutubePlayerController extends ValueNotifier<YoutubePlayerValue> {
         DeviceOrientation.landscapeRight,
       ]);
     } else {
-      SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+      // Don't force portrait mode when exiting full screen
+      // Let the app handle orientation as needed
+
+      //@TODO: Check if this works as expected on iOS
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
     }
   }
+
+  /// Toggles captions on/off.
+  void toggleCaptions() => _callMethod('toggleCaptions()');
+
+  /// Shows captions.
+  void showCaptions() => _callMethod('showCaptions()');
+
+  /// Hides captions.
+  void hideCaptions() => _callMethod('hideCaptions()');
 
   /// MetaData for the currently loaded or cued video.
   YoutubeMetaData get metadata => value.metaData;
