@@ -29,4 +29,4 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/speedometer.webp
+    - packages/youtube_player_flutter/assets/speedometer.webp

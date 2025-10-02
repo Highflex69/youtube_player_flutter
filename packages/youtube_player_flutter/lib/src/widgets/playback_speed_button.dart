@@ -65,7 +65,7 @@ class _PlaybackSpeedButtonState extends State<PlaybackSpeedButton> {
         child: widget.icon ??
             Image.asset(
               'assets/speedometer.webp',
-              //package: 'youtube_player_flutter',
+              package: 'youtube_player_flutter',
               width: 20.0,
               height: 20.0,
               color: Colors.white,
