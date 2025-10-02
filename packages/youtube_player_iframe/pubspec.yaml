@@ -13,10 +13,14 @@ dependencies:
     sdk: flutter
   meta: '>=1.7.0 <2.0.0'
   webview_flutter: ^4.13.0
-  webview_flutter_android: ^4.9.0
-  webview_flutter_wkwebview: ^3.23.0
+  webview_flutter_android: ^4.10.2
+  webview_flutter_wkwebview: ^3.23.1
   url_launcher: ^6.3.2
-  youtube_player_iframe_web: ^3.1.2
+  youtube_player_iframe_web:
+    git:
+      url: https://github.com/Highflex69/youtube_player_flutter.git
+      ref: develop # optional, e.g. "main" or a commit hash
+      path: packages/youtube_player_iframe
 
 dev_dependencies:
   flutter_lints: ^6.0.0

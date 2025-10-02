@@ -22,6 +22,11 @@ dependencies:
     sdk: flutter
   web: ^1.1.1
   webview_flutter_platform_interface: ^2.14.0
+  youtube_player_iframe:
+    git:
+      url: https://github.com/Highflex69/youtube_player_flutter.git
+      ref: develop # optional, e.g. "main" or a commit hash
+      path: packages/youtube_player_iframe
 
 dev_dependencies:
   flutter_lints: ^6.0.0
