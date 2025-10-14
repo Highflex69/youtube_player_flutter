@@ -128,17 +128,13 @@ class _ForwardRewindControlsState extends State<ForwardRewindControls>
 
   void _toggleControls() {
     _controller.updateValue(
-      _controller.value.copyWith(
-        isControlsVisible: !_controller.value.isControlsVisible,
-      ),
+      isControlsVisible: !_controller.value.isControlsVisible,
     );
     _timer?.cancel();
     _timer = Timer(widget.controlsTimeOut, () {
       if (!_controller.value.isDragging) {
         _controller.updateValue(
-          _controller.value.copyWith(
-            isControlsVisible: false,
-          ),
+          isControlsVisible: false,
         );
       }
     });

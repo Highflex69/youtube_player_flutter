@@ -180,7 +180,41 @@ class YoutubePlayerController extends ValueNotifier<YoutubePlayerValue> {
 
   /// Updates the old [YoutubePlayerValue] with new one provided.
   // ignore: use_setters_to_change_properties
-  void updateValue(YoutubePlayerValue newValue) => value = newValue;
+  void updateValue({
+    bool? isReady,
+    bool? isControlsVisible,
+    bool? isLoaded,
+    bool? hasPlayed,
+    Duration? position,
+    double? buffered,
+    bool? isPlaying,
+    bool? isFullScreen,
+    int? volume,
+    PlayerState? playerState,
+    double? playbackRate,
+    String? playbackQuality,
+    int? errorCode,
+    InAppWebViewController? webViewController,
+    bool? isDragging,
+    YoutubeMetaData? metaData,
+  }) =>
+      value = value.copyWith(
+        isReady: isReady,
+        isControlsVisible: isControlsVisible,
+        hasPlayed: hasPlayed,
+        position: position,
+        buffered: buffered,
+        isPlaying: isPlaying,
+        isFullScreen: isFullScreen,
+        volume: volume,
+        playerState: playerState,
+        playbackRate: playbackRate,
+        playbackQuality: playbackQuality,
+        errorCode: errorCode,
+        webViewController: webViewController,
+        isDragging: isDragging,
+        metaData: metaData,
+      );
 
   /// Plays the video.
   void play() => _callMethod('play()');
@@ -218,15 +252,12 @@ class YoutubePlayerController extends ValueNotifier<YoutubePlayerValue> {
 
   void _updateValues(String id) {
     if (id.length != 11) {
-      updateValue(
-        value.copyWith(
-          errorCode: 1,
-        ),
-      );
+      updateValue(errorCode: 1);
       return;
     }
     updateValue(
-      value.copyWith(errorCode: 0, hasPlayed: false),
+      errorCode: 0,
+      hasPlayed: false,
     );
   }
 
@@ -249,7 +280,7 @@ class YoutubePlayerController extends ValueNotifier<YoutubePlayerValue> {
   void seekTo(Duration position, {bool allowSeekAhead = true}) {
     _callMethod('seekTo(${position.inMilliseconds / 1000},$allowSeekAhead)');
     play();
-    updateValue(value.copyWith(position: position));
+    updateValue(position: position);
   }
 
   /// Sets the size in pixels of the player.
@@ -276,7 +307,7 @@ class YoutubePlayerController extends ValueNotifier<YoutubePlayerValue> {
 
   /// Toggles the player's full screen mode.
   void toggleFullScreenMode() {
-    updateValue(value.copyWith(isFullScreen: !value.isFullScreen));
+    updateValue(isFullScreen: !value.isFullScreen);
     if (value.isFullScreen) {
       SystemChrome.setPreferredOrientations([
         DeviceOrientation.landscapeLeft,
@@ -315,20 +346,18 @@ class YoutubePlayerController extends ValueNotifier<YoutubePlayerValue> {
 
   /// Resets the value of [YoutubePlayerController].
   void reset() => updateValue(
-        value.copyWith(
-          isReady: false,
-          isFullScreen: false,
-          isControlsVisible: false,
-          playerState: PlayerState.unknown,
-          hasPlayed: false,
-          position: Duration.zero,
-          buffered: 0.0,
-          errorCode: 0,
-          isLoaded: false,
-          isPlaying: false,
-          isDragging: false,
-          metaData: const YoutubeMetaData(),
-        ),
+        isReady: false,
+        isFullScreen: false,
+        isControlsVisible: false,
+        playerState: PlayerState.unknown,
+        hasPlayed: false,
+        position: Duration.zero,
+        buffered: 0.0,
+        errorCode: 0,
+        isLoaded: false,
+        isPlaying: false,
+        isDragging: false,
+        metaData: const YoutubeMetaData(),
       );
 
   void setDebugLogSettings({

@@ -4,6 +4,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:youtube_player_flutter/src/player/player_html.dart';
 
 import '../enums/player_state.dart';
 import '../utils/youtube_meta_data.dart';
@@ -57,7 +58,8 @@ class _RawYoutubePlayerState extends State<RawYoutubePlayer>
       case AppLifecycleState.inactive:
         break;
       case AppLifecycleState.paused:
-        _cachedPlayerState = controller!.value.playerState;
+        _cachedPlayerState =
+            controller?.value.playerState ?? PlayerState.paused;
         controller?.pause();
         break;
       default:
@@ -65,393 +67,157 @@ class _RawYoutubePlayerState extends State<RawYoutubePlayer>
   }
 
   @override
-  Widget build(BuildContext context) {
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     controller = YoutubePlayerController.of(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (controller == null) {
+      return const SizedBox.shrink();
+    }
+
+    final htmlPlayer = PlayerHtml(controller: controller!);
+
     return IgnorePointer(
       ignoring: true,
-      child: InAppWebView(
-        key: widget.key,
-        initialData: InAppWebViewInitialData(
-          data: player,
-          encoding: 'utf-8',
-          baseUrl: WebUri.uri(Uri.https('youtube-nocookie.com')),
-          mimeType: 'text/html',
-        ),
-        initialSettings: InAppWebViewSettings(
-          userAgent: userAgent,
-          mediaPlaybackRequiresUserGesture: false,
-          transparentBackground: true,
-          disableContextMenu: true,
-          supportZoom: false,
-          disableHorizontalScroll: false,
-          disableVerticalScroll: false,
-          allowsInlineMediaPlayback: true,
-          allowsAirPlayForMediaPlayback: true,
-          allowsPictureInPictureMediaPlayback: true,
-          useWideViewPort: false,
-          useHybridComposition: controller!.flags.useHybridComposition,
-        ),
-        onWebViewCreated: (webController) {
-          controller!.updateValue(
-            controller!.value.copyWith(webViewController: webController),
-          );
-          webController
-            ..addJavaScriptHandler(
-              handlerName: 'Ready',
-              callback: (_) {
-                _isPlayerReady = true;
-                if (_onLoadStopCalled) {
-                  controller!.updateValue(
-                    controller!.value.copyWith(isReady: true),
+      child: SingleChildScrollView(
+        child: InAppWebView(
+          key: widget.key,
+          initialData: InAppWebViewInitialData(
+            data: htmlPlayer.player,
+            encoding: 'utf-8',
+            baseUrl: WebUri.uri(Uri.https('youtube-nocookie.com')),
+            mimeType: 'text/html',
+          ),
+          initialSettings: InAppWebViewSettings(
+            userAgent: htmlPlayer.userAgent,
+            mediaPlaybackRequiresUserGesture: false,
+            transparentBackground: true,
+            disableContextMenu: true,
+            supportZoom: false,
+            disableHorizontalScroll: false,
+            disableVerticalScroll: false,
+            allowsInlineMediaPlayback: true,
+            allowsAirPlayForMediaPlayback: true,
+            allowsPictureInPictureMediaPlayback: true,
+            useWideViewPort: false,
+            useHybridComposition: controller?.flags.useHybridComposition,
+          ),
+          onWebViewCreated: (webController) {
+            controller?.updateValue(webViewController: webController);
+            webController
+              ..addJavaScriptHandler(
+                handlerName: 'Ready',
+                callback: (_) {
+                  _isPlayerReady = true;
+                  if (_onLoadStopCalled) {
+                    controller?.updateValue(isReady: true);
+                  }
+                },
+              )
+              ..addJavaScriptHandler(
+                handlerName: 'StateChange',
+                callback: (args) {
+                  PlayerState? playerState = controller?.value.playerState;
+                  bool? isPlaying = controller?.value.isPlaying;
+                  int? errorCode = controller?.value.errorCode;
+
+                  switch (args.first as int) {
+                    case -1:
+                      playerState = PlayerState.unStarted;
+                      break;
+                    case 0:
+                      if (controller?.metadata != null) {
+                        widget.onEnded?.call(controller!.metadata);
+                      }
+                      playerState = PlayerState.ended;
+                      break;
+                    case 1:
+                      playerState = PlayerState.playing;
+                      isPlaying = true;
+                      errorCode = 0;
+                      break;
+                    case 2:
+                      playerState = PlayerState.paused;
+                      isPlaying = false;
+                      break;
+                    case 3:
+                      playerState = PlayerState.buffering;
+                      break;
+                    case 5:
+                      playerState = PlayerState.cued;
+                      break;
+                    default:
+                      final e = Exception(
+                          "Invalid player state obtained: ${args.first}");
+                      debugPrint(e.toString());
+                      throw e;
+                  }
+
+                  controller?.updateValue(
+                    playerState: playerState,
+                    isLoaded: playerState != PlayerState.unStarted,
+                    isPlaying: isPlaying,
+                    hasPlayed: playerState == PlayerState.playing,
+                    errorCode: errorCode,
                   );
-                }
-              },
-            )
-            ..addJavaScriptHandler(
-              handlerName: 'StateChange',
-              callback: (args) {
-                switch (args.first as int) {
-                  case -1:
-                    controller!.updateValue(
-                      controller!.value.copyWith(
-                        playerState: PlayerState.unStarted,
-                        isLoaded: true,
-                      ),
-                    );
-                    break;
-                  case 0:
-                    widget.onEnded?.call(controller!.metadata);
-                    controller!.updateValue(
-                      controller!.value.copyWith(
-                        playerState: PlayerState.ended,
-                      ),
-                    );
-                    break;
-                  case 1:
-                    controller!.updateValue(
-                      controller!.value.copyWith(
-                        playerState: PlayerState.playing,
-                        isPlaying: true,
-                        hasPlayed: true,
-                        errorCode: 0,
-                      ),
-                    );
-                    break;
-                  case 2:
-                    controller!.updateValue(
-                      controller!.value.copyWith(
-                        playerState: PlayerState.paused,
-                        isPlaying: false,
-                      ),
-                    );
-                    break;
-                  case 3:
-                    controller!.updateValue(
-                      controller!.value.copyWith(
-                        playerState: PlayerState.buffering,
-                      ),
-                    );
-                    break;
-                  case 5:
-                    controller!.updateValue(
-                      controller!.value.copyWith(
-                        playerState: PlayerState.cued,
-                      ),
-                    );
-                    break;
-                  default:
-                    throw Exception("Invalid player state obtained.");
-                }
-              },
-            )
-            ..addJavaScriptHandler(
-              handlerName: 'PlaybackQualityChange',
-              callback: (args) {
-                controller!.updateValue(
-                  controller!.value
-                      .copyWith(playbackQuality: args.first as String),
-                );
-              },
-            )
-            ..addJavaScriptHandler(
-              handlerName: 'PlaybackRateChange',
-              callback: (args) {
-                final num rate = args.first;
-                controller!.updateValue(
-                  controller!.value.copyWith(playbackRate: rate.toDouble()),
-                );
-              },
-            )
-            ..addJavaScriptHandler(
-              handlerName: 'Errors',
-              callback: (args) {
-                final errorCode = args.first.toString();
-                controller!.updateValue(
-                  controller!.value
-                      .copyWith(errorCode: int.tryParse(errorCode) ?? -1),
-                );
-              },
-            )
-            ..addJavaScriptHandler(
-              handlerName: 'VideoData',
-              callback: (args) {
-                controller!.updateValue(
-                  controller!.value.copyWith(
-                      metaData: YoutubeMetaData.fromRawData(args.first)),
-                );
-              },
-            )
-            ..addJavaScriptHandler(
-              handlerName: 'VideoTime',
-              callback: (args) {
-                final position = args.first * 1000;
-                final num buffered = args.last;
-                controller!.updateValue(
-                  controller!.value.copyWith(
+                },
+              )
+              ..addJavaScriptHandler(
+                handlerName: 'PlaybackQualityChange',
+                callback: (args) {
+                  controller?.updateValue(
+                      playbackQuality: args.first as String);
+                },
+              )
+              ..addJavaScriptHandler(
+                handlerName: 'PlaybackRateChange',
+                callback: (args) {
+                  final num rate = args.first;
+                  controller?.updateValue(
+                    playbackRate: rate.toDouble(),
+                  );
+                },
+              )
+              ..addJavaScriptHandler(
+                handlerName: 'Errors',
+                callback: (args) {
+                  final errorCode = args.first.toString();
+                  controller?.updateValue(
+                    errorCode: int.tryParse(errorCode) ?? -1,
+                  );
+                },
+              )
+              ..addJavaScriptHandler(
+                handlerName: 'VideoData',
+                callback: (args) {
+                  controller?.updateValue(
+                    metaData: YoutubeMetaData.fromRawData(args.first),
+                  );
+                },
+              )
+              ..addJavaScriptHandler(
+                handlerName: 'VideoTime',
+                callback: (args) {
+                  final position = args.first * 1000;
+                  final num buffered = args.last;
+                  controller?.updateValue(
                     position: Duration(milliseconds: position.floor()),
                     buffered: buffered.toDouble(),
-                  ),
-                );
-              },
-            );
-        },
-        onLoadStop: (_, __) {
-          _onLoadStopCalled = true;
-          if (_isPlayerReady) {
-            controller!.updateValue(
-              controller!.value.copyWith(isReady: true),
-            );
-          }
-        },
+                  );
+                },
+              );
+          },
+          onLoadStop: (_, __) {
+            _onLoadStopCalled = true;
+            if (_isPlayerReady && controller != null) {
+              controller?.updateValue(isReady: true);
+            }
+          },
+        ),
       ),
     );
   }
-
-  String get player => '''
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <style>
-            html,
-            body {
-                margin: 0;
-                padding: 0;
-                background-color: #000000;
-                overflow: hidden;
-                position: fixed;
-                height: 100%;
-                width: 100%;
-                pointer-events: none;
-            }
-             ${controller!.flags.hideYoutubeOverlay ? '''
-            /* Hide YouTube overlay elements */
-            .ytp-title,
-            .ytp-chrome-top,
-            .ytp-show-cards-title,
-            .ytp-title-text,
-            .ytp-title-link,
-            .ytp-title-expanded-overlay,
-            .ytp-gradient-top,
-            .ytp-videowall-still,
-            .ytp-ce-element,
-            .ytp-cards-teaser,
-            .iv-branding,
-            .ytp-pause-overlay {
-                display: none !important;
-                visibility: hidden !important;
-                opacity: 0 !important;
-            }
-            
-            /* Hide the top gradient overlay */
-            .ytp-gradient-top {
-                background: none !important;
-            }
-            ''' : ''}
-        </style>
-        <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'>
-    </head>
-    <body>
-        <div id="player"></div>
-        <script>
-            var tag = document.createElement('script');
-            tag.src = "https://www.youtube.com/iframe_api";
-            var firstScriptTag = document.getElementsByTagName('script')[0];
-            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-            var player;
-            var timerId;
-            function onYouTubeIframeAPIReady() {
-                player = new YT.Player('player', {
-                    height: '100%',
-                    width: '100%',
-                    videoId: '${controller!.initialVideoId}',
-                    playerVars: {
-                        'controls': 0,
-                        'playsinline': 1,
-                        'enablejsapi': 1,
-                        'fs': 0,
-                        'rel': 0,
-                        'showinfo': 0,
-                        'iv_load_policy': 3,
-                        'modestbranding': 1,
-                        'cc_load_policy': ${boolean(value: controller!.flags.enableCaption)},
-                        'cc_lang_pref': '${controller!.flags.captionLanguage}',
-                        'autoplay': ${boolean(value: controller!.flags.autoPlay)},
-                        'start': ${controller!.flags.startAt},
-                        'end': ${controller!.flags.endAt}
-                    },
-                    events: {
-                        onReady: function(event) { 
-                            window.flutter_inappwebview.callHandler('Ready');
-                            ${controller!.flags.hideYoutubeOverlay ? '''
-                            // Additional JavaScript to hide overlay elements
-                            function hideOverlayElements() {
-                                var iframe = document.querySelector('iframe');
-                                if (iframe && iframe.contentDocument) {
-                                    var style = iframe.contentDocument.createElement('style');
-                                    style.textContent = `
-                                        .ytp-title, .ytp-chrome-top, .ytp-show-cards-title,
-                                        .ytp-title-text, .ytp-title-link, .ytp-title-expanded-overlay,
-                                        .ytp-gradient-top, .ytp-videowall-still, .ytp-ce-element,
-                                        .ytp-cards-teaser, .iv-branding, .ytp-pause-overlay {
-                                            display: none !important;
-                                            visibility: hidden !important;
-                                            opacity: 0 !important;
-                                        }
-                                    `;
-                                    iframe.contentDocument.head.appendChild(style);
-                                }
-                            }
-                            setTimeout(hideOverlayElements, 1000);
-                            setInterval(hideOverlayElements, 2000);
-                            ''' : ''}
-                        },
-                        onStateChange: function(event) { sendPlayerStateChange(event.data); },
-                        onPlaybackQualityChange: function(event) { window.flutter_inappwebview.callHandler('PlaybackQualityChange', event.data); },
-                        onPlaybackRateChange: function(event) { window.flutter_inappwebview.callHandler('PlaybackRateChange', event.data); },
-                        onError: function(error) { window.flutter_inappwebview.callHandler('Errors', error.data); }
-                    },
-                });
-            }
-
-            function sendPlayerStateChange(playerState) {
-                clearTimeout(timerId);
-                window.flutter_inappwebview.callHandler('StateChange', playerState);
-                if (playerState == 1) {
-                    startSendCurrentTimeInterval();
-                    sendVideoData(player);
-                }
-            }
-
-            function sendVideoData(player) {
-                var videoData = {
-                    'duration': player.getDuration(),
-                    'title': player.getVideoData().title,
-                    'author': player.getVideoData().author,
-                    'videoId': player.getVideoData().video_id
-                };
-                window.flutter_inappwebview.callHandler('VideoData', videoData);
-            }
-
-            function startSendCurrentTimeInterval() {
-                timerId = setInterval(function () {
-                    window.flutter_inappwebview.callHandler('VideoTime', player.getCurrentTime(), player.getVideoLoadedFraction());
-                }, 100);
-            }
-
-            function play() {
-                player.playVideo();
-                return '';
-            }
-
-            function pause() {
-                player.pauseVideo();
-                return '';
-            }
-
-            function loadById(loadSettings) {
-                player.loadVideoById(loadSettings);
-                return '';
-            }
-
-            function cueById(cueSettings) {
-                player.cueVideoById(cueSettings);
-                return '';
-            }
-
-            function loadPlaylist(playlist, index, startAt) {
-                player.loadPlaylist(playlist, 'playlist', index, startAt);
-                return '';
-            }
-
-            function cuePlaylist(playlist, index, startAt) {
-                player.cuePlaylist(playlist, 'playlist', index, startAt);
-                return '';
-            }
-
-            function mute() {
-                player.mute();
-                return '';
-            }
-
-            function unMute() {
-                player.unMute();
-                return '';
-            }
-            
-            function toggleCaptions() {
-                var track = player.getOption('captions', 'track');
-                if (track && track.languageCode) {
-                    player.unloadModule('captions');
-                } else {
-                    player.loadModule('captions');
-                    player.setOption('captions', 'track', {});
-                }
-                return '';
-            }
-            function showCaptions() {
-                player.loadModule('captions');
-                player.setOption('captions', 'track', {
-                    languageCode: 'en' // ensure this is defined
-                });
-                return '';
-            }
-            function hideCaptions() {
-                player.unloadModule('captions');
-                return '';
-            }
-
-            function setVolume(volume) {
-                player.setVolume(volume);
-                return '';
-            }
-
-            function seekTo(position, seekAhead) {
-                player.seekTo(position, seekAhead);
-                return '';
-            }
-
-            function setSize(width, height) {
-                player.setSize(width, height);
-                return '';
-            }
-
-            function setPlaybackRate(rate) {
-                player.setPlaybackRate(rate);
-                return '';
-            }
-
-            function setTopMargin(margin) {
-                document.getElementById("player").style.marginTop = margin;
-                return '';
-            }
-        </script>
-    </body>
-    </html>
-  ''';
-
-  String boolean({required bool value}) => value == true ? "'1'" : "'0'";
-
-  String get userAgent => controller!.flags.forceHD
-      ? 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36'
-      : '';
 }

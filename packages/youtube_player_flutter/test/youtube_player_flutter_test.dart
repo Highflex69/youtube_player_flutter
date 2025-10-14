@@ -97,7 +97,8 @@ class TestApp extends StatelessWidget {
 R provideMockedNetworkImages<R>(R Function() body) {
   return HttpOverrides.runZoned(
     body,
-    createHttpClient: (_) => _createMockImageHttpClient(_, _transparentImage),
+    createHttpClient: (securityContext) =>
+        _createMockImageHttpClient(securityContext),
   );
 }
 
@@ -110,10 +111,7 @@ class MockHttpClientResponse extends Mock implements HttpClientResponse {}
 class MockHttpHeaders extends Mock implements HttpHeaders {}
 
 // Returns a mock HTTP client that responds with an image to all requests.
-MockHttpClient _createMockImageHttpClient(
-  SecurityContext? _,
-  List<int> imageBytes,
-) {
+MockHttpClient _createMockImageHttpClient(SecurityContext? context) {
   final client = MockHttpClient();
   final request = MockHttpClientRequest();
   final response = MockHttpClientResponse();
@@ -138,7 +136,8 @@ MockHttpClient _createMockImageHttpClient(
     ]) onError = invocation.namedArguments[#onError];
     final bool cancelOnError = invocation.namedArguments[#cancelOnError];
 
-    return Stream<List<int>>.fromIterable(<List<int>>[imageBytes]).listen(
+    return Stream<List<int>>.fromIterable(<List<int>>[_transparentImage])
+        .listen(
       onData,
       onDone: onDone,
       onError: onError,

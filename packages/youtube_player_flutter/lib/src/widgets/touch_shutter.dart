@@ -72,17 +72,13 @@ class _TouchShutterState extends State<TouchShutter> {
 
   void _toggleControls() {
     _controller.updateValue(
-      _controller.value.copyWith(
-        isControlsVisible: !_controller.value.isControlsVisible,
-      ),
+      isControlsVisible: !_controller.value.isControlsVisible,
     );
     _timer?.cancel();
     _timer = Timer(widget.timeOut, () {
       if (!_controller.value.isDragging) {
         _controller.updateValue(
-          _controller.value.copyWith(
-            isControlsVisible: false,
-          ),
+          isControlsVisible: false,
         );
       }
     });
@@ -102,9 +98,7 @@ class _TouchShutterState extends State<TouchShutter> {
             },
             onHorizontalDragUpdate: (details) {
               _controller.updateValue(
-                _controller.value.copyWith(
-                  isControlsVisible: false,
-                ),
+                isControlsVisible: false,
               );
               delta = details.globalPosition.dx - dragStartPos;
               seekToPosition =

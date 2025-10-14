@@ -138,7 +138,8 @@ class _ProgressBarState extends State<ProgressBar> {
 
   void _dragEndActions() {
     _controller.updateValue(
-      _controller.value.copyWith(isControlsVisible: false, isDragging: false),
+      isControlsVisible: false,
+      isDragging: false,
     );
     _controller.seekTo(_position, allowSeekAhead: true);
     setState(() {
@@ -151,7 +152,8 @@ class _ProgressBarState extends State<ProgressBar> {
     return GestureDetector(
       onHorizontalDragDown: (details) {
         _controller.updateValue(
-          _controller.value.copyWith(isControlsVisible: true, isDragging: true),
+          isControlsVisible: true,
+          isDragging: true,
         );
         _seekToRelativePosition(details.globalPosition);
         setState(() {
