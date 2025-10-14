@@ -41,10 +41,14 @@ class PlayerHtml {
     ''';
 
   String get _scriptSection => '''
+    // 2. This code loads the IFrame Player API code asynchronously.
     var tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
     var firstScriptTag = document.getElementsByTagName('script')[0];
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    
+    // 3. This function creates an <iframe> (and YouTube player)
+    //    after the API code downloads.
     var player;
     var timerId;
             
@@ -69,10 +73,7 @@ class PlayerHtml {
                         'end': ${controller.flags.endAt}
                     },
                     events: {
-                        onReady: function(event) { 
-                            window.flutter_inappwebview.callHandler('Ready');
-                            $_hideOverlayBodySection
-                        },
+                        onReady: onPlayerReady,
                         onStateChange: function(event) { sendPlayerStateChange(event.data); },
                         onPlaybackQualityChange: function(event) { window.flutter_inappwebview.callHandler('PlaybackQualityChange', event.data); },
                         onPlaybackRateChange: function(event) { window.flutter_inappwebview.callHandler('PlaybackRateChange', event.data); },
@@ -80,6 +81,12 @@ class PlayerHtml {
                     },
                 });
             }
+            
+          // 4. The API will call this function when the video player is ready.
+            function onPlayerReady(event) { 
+                window.flutter_inappwebview.callHandler('Ready');
+                $_hideOverlayBodySection
+            };
 
             function sendPlayerStateChange(playerState) {
                 clearTimeout(timerId);
